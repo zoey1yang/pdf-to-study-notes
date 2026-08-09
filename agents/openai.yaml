@@ -1,0 +1,4 @@
+interface:
+  display_name: "PDF to Study Notes"
+  short_description: "Turn courseware PDFs into structured study notes"
+  default_prompt: "Use $pdf-to-study-notes to convert this courseware PDF into clean, hierarchical Markdown study notes."
