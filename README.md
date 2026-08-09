@@ -1,69 +1,47 @@
-# pdf-to-study-notes
+# 📄 pdf-to-study-notes
 
-把课件 PDF（数字版或扫描件、中文或英文）转成**带层级、可直接背的 Markdown 学习笔记**。
+把课件 PDF（数字版或扫描件、中英文都行）变成**带层级、能直接背的 Markdown 学习笔记**。
 
-anydoc 给你"能读的 Markdown"，我们给你"能背的笔记"：扫描件 OCR 内置、标题层级来自真实字号/字高、水印自动过滤，最后还有一步 LLM 语义清洗（纠错、层级重排、补缺标注、逻辑衔接）。
+![banner](https://socialify.git.ci/zoey1yang/pdf-to-study-notes/image?description=1&font=Raleway&language=1&name=1&owner=1&pattern=Circuit%20Board&theme=Light)
 
-## 特性
+## 它能做什么
 
-- **扫描件中文 PDF 端到端**：内置 OCR + 水印过滤 + 字高推断层级，无需外挂 OCR 服务；
-- **两段式流水线**：机械转换（快、稳、省 token）→ LLM 语义清洗（可选的第二个脚本由 AI 按规则执行）；
-- **轻量**：核心依赖只有 PyMuPDF（约 54 MB）；OCR 惰性加载，纯数字版永远不碰 OCR 全家桶（约 148 MB 全装）；
-- **可溯源**：保留 `<!-- 第 N 页 -->` 页标记、原始转换版备份，补注内容统一标 `【补充】`；
-- **离线可用**：不上传文件、不调云 API。
-
-## 安装
-
-```bash
-# 轻量版（只处理带文字层的 PDF）
-pip install pymupdf
-
-# 完整版（支持扫描件 OCR）
-pip install pymupdf rapidocr_onnxruntime pillow
-```
+- 🔍 **扫描件也能读**：内置 OCR，中英文扫描件直接转文字，不用外挂服务
+- 🧱 **还原真实层级**：按字号 / 字高推断标题级别，还原 `#` 到 `####`
+- 🧹 **水印自动过滤**：机械清洗去水印、压空行、修碎片标题
+- 🧠 **AI 语义清洗**：可选一步 LLM 清洗，纠错、补缺、逻辑衔接，可直接背
+- 💾 **离线轻量**：核心依赖只有 PyMuPDF（约 54MB），不上传文件
 
 ## 快速开始
 
 ```bash
-# 转换（自动识别文字层 / 扫描页）
-python scripts/convert.py <课件.pdf 或目录> -o out/
+# 轻量版（数字版 PDF）
+pip install pymupdf
 
-# 机械预清洗（去水印、压空行、降级碎片标题）
-python scripts/mech_clean.py out/xxx.md mech/xxx.md
+# 完整版（扫描件 OCR）
+pip install pymupdf rapidocr_onnxruntime pillow
 
-# 第三步：按 references/cleanup-guide.md 的规则做 LLM 语义清洗
+# 转换
+python scripts/convert.py 课件.pdf -o out/
 ```
 
-参数：`--dpi`（默认 170，扫描件速度与质量的平衡点）、`--min-chars`、`--watermark-ratio`。
+转换 → 清洗 → 开背，就这么简单。详细用法见 [SKILL.md](SKILL.md)。
 
-## 输出约定
+## 和同类工具比
 
-- `#` 文件标题 / `##` 章节 / `###` 小节 / `####` 知识点；
-- 每页保留 `<!-- 第 N 页 -->` 标记，可对照原 PDF；
-- 整理时补充/校正的内容统一标 `【补充：…】`；
-- 格式示例见 [assets/example.md](assets/example.md)，清洗规则见 [references/cleanup-guide.md](references/cleanup-guide.md)。
-
-## 与同类工具对比
-
-| 维度 | anydoc | MinerU | 本 skill |
+| 维度 | anydoc | MinerU | 本工具 |
 | --- | --- | --- | --- |
-| 扫描件中文 PDF | 不支持（需外部 OCR） | 支持 | 支持 |
-| 标题层级 | 文字层 PDF 层级弱 | 本地默认全部 `#`（需 LLM 辅助） | 字号/字高真实分层 |
-| 二次清洗成笔记 | 无 | 无 | 有（LLM 语义清洗） |
-| 安装体积 | npx + Rust 工具链 | 模型数 GB | ~54 MB（纯数字版） |
-| 离线 | 是 | 是 | 是 |
+| 扫描件中文 PDF | ✗ | ✓ | ✓ |
+| 还原标题层级 | 弱 | 全变 `#` | 字号真实分层 |
+| 二次清洗成笔记 | ✗ | ✗ | ✓（AI 清洗） |
+| 安装体积 | npx + 工具链 | 数 GB | ~54MB |
+| 离线 | ✓ | ✓ | ✓ |
 
-## 依赖与许可证
+## 更多
 
-| 依赖 | 许可证 | 用途 |
-| --- | --- | --- |
-| PyMuPDF | AGPL-3.0 | 文字层提取 + 页面渲染 |
-| rapidocr_onnxruntime | Apache-2.0 | 扫描件 OCR |
-| Pillow | HPND | 图片处理 |
+- 输出示例：[assets/example.md](assets/example.md)
+- 清洗规则：[references/cleanup-guide.md](references/cleanup-guide.md)
+- 小红书海报素材：[assets/posters/](assets/posters/)
+- 许可证：AGPL-3.0（[LICENSE](LICENSE)，与 PyMuPDF 兼容）
 
-本仓库以 **AGPL-3.0** 发布（见 [LICENSE](LICENSE)），与 PyMuPDF 的 AGPL 许可证兼容。
-
-## 参考与致谢
-
-- 目录结构与打包规范遵循 OpenAI [skill-creator](https://github.com/openai/codex) 约定；
-- 对比评估过 [firecrawl/anydoc](https://github.com/firecrawl/anydoc)、[MinerU](https://github.com/opendatalab/MinerU)、md-reheader 等方案，最终选择"PyMuPDF + RapidOCR + LLM 清洗"的轻量路线（评估过程见上表）。
+喜欢的话点个 ⭐ 支持一下～
