@@ -15,7 +15,9 @@ hierarchy normalization, gap-filling, logical connectors).
 ## Dependencies
 
 - Python 3.10+
-- `PyMuPDF`, `rapidocr_onnxruntime`, `Pillow` (install once: `pip install pymupdf rapidocr_onnxruntime pillow`)
+- Core (digital/text-layer PDFs only): `pip install pymupdf` (~54 MB)
+- With OCR (scanned PDFs): `pip install pymupdf rapidocr_onnxruntime pillow` (~148 MB)
+- The OCR stack is loaded lazily: runs that never hit a scanned page skip it entirely.
 - CPU-only is fine; scanned pages are slow (~5-20 s/page depending on DPI and machine).
 
 ## Workflow
@@ -28,7 +30,8 @@ hierarchy normalization, gap-filling, logical connectors).
 
    The script auto-detects: text-layer pages get real font-size headings; weak-text
    pages and pages whose text layer is mostly repeated watermark lines are OCR'd with
-   height-based heading inference. Output keeps `<!-- 第 N 页 -->` markers.
+   height-based heading inference. OCR initializes only on the first scanned page.
+   Output keeps `<!-- 第 N 页 -->` markers.
 
 2. **Pre-clean mechanically** (saves LLM tokens):
 

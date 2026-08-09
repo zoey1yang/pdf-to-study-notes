@@ -11,7 +11,7 @@ Strategy:
   filtered out.
 
 Usage:
-    python convert.py <pdf-or-dir>... -o <outdir> [--dpi 200] [--min-chars 40]
+    python convert.py <pdf-or-dir>... -o <outdir> [--dpi 170] [--min-chars 40]
 """
 from __future__ import annotations
 
@@ -23,8 +23,9 @@ from collections import Counter
 from pathlib import Path
 
 import fitz  # PyMuPDF
-from PIL import Image
-from rapidocr_onnxruntime import RapidOCR
+
+# NOTE: rapidocr_onnxruntime / Pillow are imported lazily, only when the first
+# scanned page is hit. Digital-only PDFs never load the ~95 MB OCR stack.
 
 
 # font-size / OCR-height ratio to heading level
@@ -128,8 +129,10 @@ def render_text_page(lines: list[tuple[float, float, str, float]], body_size: fl
     return "\n\n".join(parts)
 
 
-def ocr_page_items(page, ocr: RapidOCR, dpi: int) -> list[tuple[float, float, float, str]]:
+def ocr_page_items(page, ocr, dpi: int) -> list[tuple[float, float, float, str]]:
     """OCR a page, returning (y0, x0, text_height, text)."""
+    from PIL import Image
+
     pix = page.get_pixmap(dpi=dpi)
     img = Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB")
     result, _ = ocr(img)
@@ -160,7 +163,17 @@ def render_ocr_page(items: list[tuple[float, float, float, str]], noise: set[str
     return "\n\n".join(parts)
 
 
-def convert_one(pdf: Path, ocr: RapidOCR, out_dir: Path, dpi: int, min_chars: int, wm_ratio: float) -> dict:
+def _ensure_ocr(ocr):
+    """Lazily create the OCR engine on first scanned page."""
+    if ocr is None:
+        from rapidocr_onnxruntime import RapidOCR
+
+        print("  [OCR] 首次遇到扫描页，加载 OCR 引擎（纯文字层 PDF 不会触发）…", flush=True)
+        return RapidOCR()
+    return ocr
+
+
+def convert_one(pdf: Path, ocr, out_dir: Path, dpi: int, min_chars: int, wm_ratio: float) -> dict:
     doc = fitz.open(str(pdf))
     page_count = doc.page_count
 
@@ -193,6 +206,7 @@ def convert_one(pdf: Path, ocr: RapidOCR, out_dir: Path, dpi: int, min_chars: in
                 lines = []
         if not lines:
             try:
+                ocr = _ensure_ocr(ocr)
                 pages_data.append(("ocr", ocr_page_items(doc[idx - 1], ocr, dpi)))
             except Exception as exc:
                 pages_data.append(("ocr_error", f"（第 {idx} 页 OCR 失败：{exc}）"))
@@ -244,7 +258,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Convert courseware PDFs to hierarchical Markdown.")
     ap.add_argument("inputs", nargs="+", help="PDF files or directories containing PDFs")
     ap.add_argument("-o", "--out", default="out", help="Output directory (default: out)")
-    ap.add_argument("--dpi", type=int, default=200, help="OCR render DPI (default: 200)")
+    ap.add_argument("--dpi", type=int, default=170, help="OCR render DPI (default: 170)")
     ap.add_argument("--min-chars", type=int, default=40, help="Min text-layer chars to skip OCR (default: 40)")
     ap.add_argument("--watermark-ratio", type=float, default=0.5,
                     help="Reclassify page to OCR when frequent-line chars exceed this ratio (default: 0.5)")
@@ -264,7 +278,7 @@ def main() -> None:
         print("没有找到 PDF 文件")
         sys.exit(1)
 
-    ocr = RapidOCR()
+    ocr = None  # initialized lazily on the first scanned page
     for pdf in pdfs:
         try:
             item = convert_one(pdf, ocr, out_dir, args.dpi, args.min_chars, args.watermark_ratio)
