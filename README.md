@@ -61,7 +61,7 @@ python scripts/mech_clean.py out/xxx.md mech/xxx.md
 | rapidocr_onnxruntime | Apache-2.0 | 扫描件 OCR |
 | Pillow | HPND | 图片处理 |
 
-> 许可证待定：若本仓库整体采用 AGPL-3.0，可与 PyMuPDF 直接兼容；如需宽松许可（如 MIT），需将 PyMuPDF 列为可选依赖并在运行时安装。
+本仓库以 **AGPL-3.0** 发布（见 [LICENSE](LICENSE)），与 PyMuPDF 的 AGPL 许可证兼容。
 
 ## 参考与致谢
 
