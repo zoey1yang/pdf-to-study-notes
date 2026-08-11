@@ -27,6 +27,12 @@ python scripts/convert.py 课件.pdf -o out/
 
 转换 → 清洗 → 开背，就这么简单。详细用法见 [SKILL.md](SKILL.md)。
 
+转换完记得跑一次题号自检，把疑似漏题/并题列出来对照原 PDF 核对：
+
+```bash
+python scripts/audit_questions.py out/课件.md -o 可疑清单.md
+```
+
 ## 和同类工具比
 
 | 维度 | anydoc | MinerU | 本工具 |

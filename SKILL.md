@@ -46,11 +46,19 @@ hierarchy normalization, gap-filling, logical connectors).
    - Keep page markers; normalize hierarchy (`##` chapter / `###` section / `####` point).
    - Fix only confident OCR errors; mark all additions with `【补充：…】`.
    - Merge fragmented lines with logical connectors; put grouped facts into tables.
+   - **Split questions by dual anchors** (question number + line-start indent); never merge
+     two questions silently. Keep single-letter option markers (A/B/C/D).
    - Keep output tighter than input; no padding.
 
-4. **Verify** each file:
+4. **Audit questions** — run `python scripts/audit_questions.py <cleaned.md> -o 可疑清单.md`.
+   Missing/merged questions and short-character candidates are listed as "疑似" for the user
+   to cross-check against the source PDF; never silently repair what might be lost content.
+
+5. **Verify** each file:
    - No watermark fragments left (`客服微信`, `Exoplanet`, `TONGJI`, etc.);
    - Heading list has no fragment junk (`grep '^#'`);
+   - Question numbers are contiguous (audit report has no 漏题/并题 items, or they were
+     confirmed against the PDF);
    - Every page marker has content or is intentionally empty.
 
 ## Guidance

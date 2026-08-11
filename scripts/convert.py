@@ -36,6 +36,7 @@ LEVELS = (
 )
 MAX_HEADING_CHARS = 45
 LIST_MARK_RE = re.compile(r"^\s*(?:[-•·*▪◦●○◆◇►▶]|\d+[.、)）]|[①②③④⑤⑥⑦⑧⑨⑩])\s*")
+OPTION_MARKER_RE = re.compile(r"^[A-Ha-h][.、)）:：]?$")
 
 
 def looks_like_junk(text: str) -> bool:
@@ -43,6 +44,9 @@ def looks_like_junk(text: str) -> bool:
     if not t:
         return True
     if len(t) <= 3 and not any("\u4e00" <= ch <= "\u9fff" for ch in t):
+        # 选择题选项字母（A/B/C/D 等）必须保留，OCR 短字符低置信也不得静默丢弃
+        if OPTION_MARKER_RE.match(t):
+            return False
         return True
     return False
 

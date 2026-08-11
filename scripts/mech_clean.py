@@ -37,6 +37,7 @@ JUNK_WORDS = {
 }
 BULLET_ONLY = re.compile(r"^\s*(?:[-•·*▪◦●○◆◇►▶□■]|\d+[.、)）])\s*$")
 HEADING = re.compile(r"^(#{1,4})\s+(.*)$")
+OPTION_MARKER_RE = re.compile(r"^[A-Ha-h][.、)）:：]?$")
 
 
 def is_noise_line(text: str) -> bool:
@@ -51,6 +52,9 @@ def is_noise_line(text: str) -> bool:
     if any(w in t for w in JUNK_WORDS):
         return True
     if len(t) <= 3 and not re.search(r"[\u4e00-\u9fff]", t):
+        # 选择题选项字母（A/B/C/D 等）必须保留，不得当碎片丢弃
+        if OPTION_MARKER_RE.match(t):
+            return False
         return True
     return False
 
